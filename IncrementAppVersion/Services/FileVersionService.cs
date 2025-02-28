@@ -68,5 +68,7 @@ namespace IncrementAppVersion.Services
                 throw ex;
             }
         }
+
+        public string GetFileContents() => fileContents;
     }
 }

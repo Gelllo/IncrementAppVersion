@@ -51,13 +51,17 @@ namespace IncrementAppVersion.Services
             {
                 _version = version.Split('.')
                     .Select(uint.Parse)
-
                     .ToArray();
 
-                if (_version.Count() != 4)
+                if (_version.Count() != 4 )
                     throw new FormatException("The version need to contain 4 digits");
 
                 return _version;
+            }
+            catch (OverflowException ex)
+            {
+                _logger.LogError("The version must be composed of positive numbers", ex);
+                throw;
             }
             catch (FormatException ex)
             {

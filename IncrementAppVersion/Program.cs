@@ -77,6 +77,7 @@ class Program
         var packageVersionService = new PackageVersionService(version, logger);
 
         packageVersionService.IncrementVersion(requestedReleaseType);
+
         var newVersion = packageVersionService.GetVersion();
 
         fileVersionService.UpdateVersionFromFile(newVersion);

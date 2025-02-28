@@ -13,5 +13,7 @@ namespace IncrementAppVersion.Interfaces
         void UpdateVersionFromFile(string version);
 
         string GetVersionFromFile();
+
+        string GetFileContents();
     }
 }
