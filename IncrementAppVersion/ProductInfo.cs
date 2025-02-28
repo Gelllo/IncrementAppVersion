@@ -8,6 +8,6 @@ namespace IncrementAppVersion
 {
     public static class ProductInfo
     {
-        public static readonly string ProductVersion = "1.0.1.0";
+        public static readonly string ProductVersion = "1.0.2.2";
     }
 }

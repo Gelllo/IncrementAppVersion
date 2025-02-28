@@ -1,6 +1,9 @@
 ﻿using IncrementAppVersion.Enums;
+using IncrementAppVersion.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 class Program
 {
@@ -10,50 +13,34 @@ class Program
 
         var input = Console.ReadLine().Trim();
 
-        Console.WriteLine($"Version type: {input}");
-
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .Add(new JsonConfigurationSource { Path = "appsettings.json", Optional = false, ReloadOnChange = true})
-            .Build();
+        .Build();
 
-        //Read file contents
-        string filePath = configuration.GetSection("FilePath").Value.ToString();
-        string contents = File.ReadAllText(filePath);
-        //Parse input into enum type
 
-        if(Enum.TryParse(input, ignoreCase:true, out ReleaseType releaseType))
+        if (Enum.TryParse(input, ignoreCase:true, out ReleaseType requestedReleaseType))
         {
-            Console.WriteLine($"Release type: {releaseType}");
+            Console.WriteLine($"Release type: {requestedReleaseType}");
         }
         else
         {
             throw new InvalidCastException("Invalid release type");
         }
 
-        //Based on input type increment version
+        FileVersionService fileVersionService = new FileVersionService(configuration);
+        fileVersionService.LoadFileContents();
 
-        string currentReleaseString = "1.0.0.0";
+        var version = fileVersionService.GetVersionFromFile();
 
-        uint[] releaseParsed = currentReleaseString.Split('.').Select(uint.Parse).ToArray();
+        var packageVersionService = new PackageVersionService(version);
 
-        var index = (int)releaseType;
+        packageVersionService.IncrementVersion(requestedReleaseType);
+        var newVersion = packageVersionService.GetVersion();
 
-        releaseParsed[index]++;
-        while (index < 3)
-        {
-            releaseParsed[++index] = 0;
-        }
+        fileVersionService.UpdateVersionFromFile(newVersion);
 
-        string newVersion = string.Join(".", releaseParsed);
-
-        Console.WriteLine("New version: " + newVersion);
-        //Write to file contents
-
-        string newContents = contents.Replace(currentReleaseString, newVersion);
-
-        File.WriteAllText(filePath, newContents);
-
+        Console.WriteLine("New Version:" + newVersion);
         Console.ReadKey();
     }
 }
