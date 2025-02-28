@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace IncrementAppVersion.Interfaces;
 
-namespace IncrementAppVersion.Interfaces
+public interface IFileVersionService
 {
-    public interface IFileVersionService
-    {
-        void LoadFileContents();
+    void LoadFileContents();
 
-        void UpdateVersionFromFile(string version);
+    void UpdateVersionFromFile(string version);
 
-        string GetVersionFromFile();
+    string GetVersionFromFile();
 
-        string GetFileContents();
-    }
+    string GetFileContents();
 }
+

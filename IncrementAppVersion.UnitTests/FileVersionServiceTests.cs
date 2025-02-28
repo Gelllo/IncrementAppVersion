@@ -2,114 +2,108 @@
 using IncrementAppVersion.Services;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace IncrementAppVersion.UnitTests
+namespace IncrementAppVersion.UnitTests;
+
+public class FileVersionServiceTests
 {
-    public class FileVersionServiceTests
+    private readonly Mock<ILoggingService> _logger = new();
+    private readonly Mock<IConfiguration> _mockConfig = new();
+    private readonly string testFilePath = Path.GetTempFileName();
+
+    public FileVersionServiceTests()
     {
-        private readonly Mock<ILoggingService> _logger = new();
-        private readonly Mock<IConfiguration> _mockConfig = new();
-        private readonly string testFilePath = Path.GetTempFileName();
+        var mockSection = new Mock<IConfigurationSection>();
+        mockSection.Setup(s => s.Value).Returns(testFilePath);
+        _mockConfig.Setup(c => c.GetSection("FilePath"))
+            .Returns(mockSection.Object);
+    }
 
-        public FileVersionServiceTests()
+    [Fact]
+    public void ReadFileVersion_ValidFile_ReturnsFileContent()
+    {
+        // Arrange
+
+        var expectedContent = "version=\"1.0.0.0\"";
+
+        File.WriteAllText(testFilePath, expectedContent);
+
+        var service = new FileVersionService(_mockConfig.Object, _logger.Object);
+
+        try
         {
-            var mockSection = new Mock<IConfigurationSection>();
-            mockSection.Setup(s => s.Value).Returns(testFilePath);
-            _mockConfig.Setup(c => c.GetSection("FilePath"))
-                .Returns(mockSection.Object);
+            // Act
+            service.LoadFileContents();
+
+            // Assert
+            Assert.Equal(expectedContent, service.GetFileContents());
         }
-
-        [Fact]
-        public void ReadFileVersion_ValidFile_ReturnsFileContent()
+        finally
         {
-            // Arrange
-
-            var expectedContent = "version=\"1.0.0.0\"";
-
-            File.WriteAllText(testFilePath, expectedContent);
-
-            var service = new FileVersionService(_mockConfig.Object, _logger.Object);
-
-            try
+            if (File.Exists(testFilePath))
             {
-                // Act
-                service.LoadFileContents();
-
-                // Assert
-                Assert.Equal(expectedContent, service.GetFileContents());
-            }
-            finally
-            {
-                if (File.Exists(testFilePath))
-                {
-                    File.Delete(testFilePath);
-                }
+                File.Delete(testFilePath);
             }
         }
+    }
 
-        [Fact]
-        public void UpdateVersionFromFile_ValidContent_WritesToFile()
+    [Fact]
+    public void UpdateVersionFromFile_ValidContent_WritesToFile()
+    {
+        // Arrange
+        var mockConfig = new Mock<IConfiguration>();
+        var testFilePath = Path.GetTempFileName();
+        var existingContent = "version=\"1.0.0.0\"";
+        var contentToWrite = "version=\"2.0.0.0\"";
+
+        var service = new FileVersionService(_mockConfig.Object, _logger.Object);
+
+        File.WriteAllText(testFilePath, existingContent);
+
+        try
         {
-            // Arrange
-            var mockConfig = new Mock<IConfiguration>();
-            var testFilePath = Path.GetTempFileName();
-            var existingContent = "version=\"1.0.0.0\"";
-            var contentToWrite = "version=\"2.0.0.0\"";
+            // Act
+            service.LoadFileContents();
+            service.UpdateVersionFromFile(contentToWrite);
 
-            var service = new FileVersionService(_mockConfig.Object, _logger.Object);
+            // Assert
 
-            File.WriteAllText(testFilePath, existingContent);
-
-            try
+            Assert.NotEqual(contentToWrite, service.GetFileContents());
+        }
+        finally
+        {
+            if (File.Exists(testFilePath))
             {
-                // Act
-                service.LoadFileContents();
-                service.UpdateVersionFromFile(contentToWrite);
-
-                // Assert
-
-                Assert.NotEqual(contentToWrite, service.GetFileContents());
-            }
-            finally
-            {
-                if (File.Exists(testFilePath))
-                {
-                    File.Delete(testFilePath);
-                }
+                File.Delete(testFilePath);
             }
         }
+    }
 
-        [Fact]
-        public void GetVersionFromFile_ValidPattern_ReturnsVersionNumber()
+    [Fact]
+    public void GetVersionFromFile_ValidPattern_ReturnsVersionNumber()
+    {
+        // Arrange
+        var expectedVersion = "2.0.0.1";
+        var existingContent = "Madgex Madgex version=\"2.0.0.1\" Madgex Madgex";
+
+        File.WriteAllText(testFilePath, existingContent);
+
+        var service = new FileVersionService(_mockConfig.Object, _logger.Object);
+
+        try
         {
-            // Arrange
-            var expectedVersion = "2.0.0.1";
-            var existingContent = "Madgex Madgex version=\"2.0.0.1\" Madgex Madgex";
+            // Act
+            service.LoadFileContents();
+            var result = service.GetVersionFromFile();
 
-            File.WriteAllText(testFilePath, existingContent);
-
-            var service = new FileVersionService(_mockConfig.Object, _logger.Object);
-
-            try
+            // Assert
+            Assert.Equal(expectedVersion, result);
+        }
+        finally
+        {
+            if (File.Exists(testFilePath))
             {
-                // Act
-                service.LoadFileContents();
-                var result = service.GetVersionFromFile();
-
-                // Assert
-                Assert.Equal(expectedVersion, result);
-            }
-            finally
-            {
-                if (File.Exists(testFilePath))
-                {
-                    File.Delete(testFilePath);
-                }
+                File.Delete(testFilePath);
             }
         }
     }

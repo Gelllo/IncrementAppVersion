@@ -1,13 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace IncrementAppVersion;
 
-namespace IncrementAppVersion
+public static class ProductInfo
 {
-    public static class ProductInfo
-    {
-        public static readonly string ProductVersion = "1.2.1.0";
-    }
+    public static readonly string ProductVersion = "1.2.1.0";
 }

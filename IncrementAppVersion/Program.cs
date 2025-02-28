@@ -6,29 +6,25 @@ using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Core;
-using System;
 
 class Program
 {
     static void Main(string[] args)
     {
-        //var version = args[0];
+        var input = args[0];
 
-        var input = Console.ReadLine().Trim();
-
-        var configuration = GetConfiguration();
+        var configuration = GetRequiredConfiguration();
 
         ConfigureLogging(configuration.GetSection("LoggingFile").Value.ToString());        
 
-        var serviceProvider = ConfigureServices();
+        var serviceProvider = GetRequiredServices();
 
         var logger = serviceProvider.GetService<ILoggingService>();
 
         IncrementVersionNumber(input, configuration, logger);    
     }
 
-    private static IConfiguration GetConfiguration()
+    private static IConfiguration GetRequiredConfiguration()
     {
         return new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -36,7 +32,7 @@ class Program
             .Build();
     }
 
-    private static ServiceProvider ConfigureServices()
+    private static ServiceProvider GetRequiredServices()
     {
         return new ServiceCollection()
              .AddLogging(loggingBuilder =>
@@ -61,11 +57,11 @@ class Program
     {
         if (Enum.TryParse(input, ignoreCase: true, out ReleaseType requestedReleaseType))
         {
-            Console.WriteLine($"Release type: {requestedReleaseType}");
+            Log.Information($"Requested Release Type matches: {requestedReleaseType}");
         }
         else
         {
-            var ex = new InvalidCastException("Invalid release type");
+            var ex = new InvalidCastException("Requested release could not be matched");
             Log.Error("Invalid release type", ex);
         }
 

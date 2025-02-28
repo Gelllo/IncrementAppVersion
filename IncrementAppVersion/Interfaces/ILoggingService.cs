@@ -1,8 +1,7 @@
-﻿namespace IncrementAppVersion.Interfaces
+﻿namespace IncrementAppVersion.Interfaces;
+
+public interface ILoggingService
 {
-    public interface ILoggingService
-    {
-        void LogInformation(string message);
-        void LogError(string message, Exception ex);
-    }
+    void LogInformation(string message);
+    void LogError(string message, Exception ex);
 }
