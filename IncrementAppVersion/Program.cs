@@ -1,4 +1,6 @@
 ﻿using IncrementAppVersion.Enums;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
 
 class Program
 {
@@ -10,8 +12,13 @@ class Program
 
         Console.WriteLine($"Version type: {input}");
 
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .Add(new JsonConfigurationSource { Path = "appsettings.json", Optional = false, ReloadOnChange = true})
+            .Build();
+
         //Read file contents
-        string filePath = "";
+        string filePath = configuration.GetSection("FilePath").Value.ToString();
         string contents = File.ReadAllText(filePath);
         //Parse input into enum type
 
