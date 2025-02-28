@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Core;
 using System;
 
 class Program
@@ -16,20 +17,28 @@ class Program
 
         var input = Console.ReadLine().Trim();
 
-        var configuration = new ConfigurationBuilder()
+        var configuration = GetConfiguration();
+
+        ConfigureLogging(configuration.GetSection("LoggingFile").Value.ToString());        
+
+        var serviceProvider = ConfigureServices();
+
+        var logger = serviceProvider.GetService<ILoggingService>();
+
+        IncrementVersionNumber(input, configuration, logger);    
+    }
+
+    private static IConfiguration GetConfiguration()
+    {
+        return new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .Add(new JsonConfigurationSource { Path = "appsettings.json", Optional = false, ReloadOnChange = true})
-        .Build();
+            .Add(new JsonConfigurationSource { Path = "appsettings.json", Optional = false, ReloadOnChange = true })
+            .Build();
+    }
 
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information() // Set the minimum log level
-            .WriteTo.Console() // Write to console
-            .WriteTo.File(configuration.GetSection("LoggingFile").Value.ToString()) // Write to file
-            .CreateLogger();
-
-        Log.Information("Starting Increment App Version");
-
-        var serviceProvider = new ServiceCollection()
+    private static ServiceProvider ConfigureServices()
+    {
+        return new ServiceCollection()
              .AddLogging(loggingBuilder =>
              {
                  loggingBuilder.ClearProviders();
@@ -37,10 +46,20 @@ class Program
              })
              .AddSingleton<ILoggingService, LoggingService>()
              .BuildServiceProvider();
+    }
 
-        var logger = serviceProvider.GetService<ILoggingService>();
+    private static void ConfigureLogging(string logFilePath)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.Console()
+            .WriteTo.File(logFilePath)
+            .CreateLogger();
+    }
 
-        if (Enum.TryParse(input, ignoreCase:true, out ReleaseType requestedReleaseType))
+    private static void IncrementVersionNumber(string input, IConfiguration configuration, ILoggingService logger)
+    {
+        if (Enum.TryParse(input, ignoreCase: true, out ReleaseType requestedReleaseType))
         {
             Console.WriteLine($"Release type: {requestedReleaseType}");
         }
@@ -61,7 +80,5 @@ class Program
         var newVersion = packageVersionService.GetVersion();
 
         fileVersionService.UpdateVersionFromFile(newVersion);
-
-        Console.ReadKey();
     }
 }
