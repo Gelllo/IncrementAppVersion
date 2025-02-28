@@ -11,14 +11,17 @@ namespace IncrementAppVersion.Services
     public class PackageVersionService : IPackageVersionService
     {
         private uint[] _version = [0, 0, 0, 0];
+        private readonly ILoggingService _logger;
 
-        public PackageVersionService()
+        public PackageVersionService(ILoggingService logger)
         {
+            _logger = logger;
         }
 
-        public PackageVersionService(string version)
+        public PackageVersionService(string version, ILoggingService logger)
         {
             _version = ParseVersion(version);
+            _logger = logger;
         }
 
         public void IncrementVersion(ReleaseType type)
@@ -32,12 +35,14 @@ namespace IncrementAppVersion.Services
                 {
                     _version[++index] = 0;
                 }
+
+                _logger.LogInformation("Version was successfully incremented");
             }
             catch (Exception ex)
             {
-                throw new Exception($"Increment version failed: {ex.Message}");
+                _logger.LogError("Error incrementing the version", ex);
+                throw;
             }
-
         }
 
         public uint[] ParseVersion(string version)
@@ -56,10 +61,12 @@ namespace IncrementAppVersion.Services
             }
             catch (FormatException ex)
             {
+                _logger.LogError("Incorrect version format", ex);
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.LogError("Error parsing the version", ex);
                 throw;
             }
         }

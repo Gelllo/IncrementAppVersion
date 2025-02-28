@@ -13,11 +13,13 @@ namespace IncrementAppVersion.Services
     {
         private readonly string? VersionLookup = "(\\d+\\.\\d+\\.\\d+\\.\\d+)";
         private readonly string? FileVersionPath;
+        private readonly ILoggingService _logger;
         private string fileContents = string.Empty;
 
-        public FileVersionService(IConfiguration configuration)
+        public FileVersionService(IConfiguration configuration, ILoggingService logger)
         {
             FileVersionPath = configuration.GetSection("FilePath").Value.ToString();
+            _logger = logger;
         }
 
         public void LoadFileContents()
@@ -25,10 +27,12 @@ namespace IncrementAppVersion.Services
             try
             {
                 fileContents = File.ReadAllText(FileVersionPath);
+                _logger.LogInformation("File contents loaded successfully");
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error reading the file: {ex.Message}", ex);
+                _logger.LogError("Error loading the file contents", ex);
+                throw;
             }
         }
 
@@ -38,15 +42,14 @@ namespace IncrementAppVersion.Services
             {
                 var updatedFileContents = Regex.Replace(fileContents, VersionLookup, version);
 
-                if (updatedFileContents != fileContents)
-                {
-                    File.WriteAllText(FileVersionPath, updatedFileContents);
-                }
+                File.WriteAllText(FileVersionPath, updatedFileContents);
 
+                _logger.LogInformation("Version updated successfully: NEW VERSION:" + version);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error updating version from file: {ex.Message}", ex);
+                _logger.LogError("Error updating the version", ex);
+                throw;
             }
         }
 
@@ -55,11 +58,14 @@ namespace IncrementAppVersion.Services
             Match match = Regex.Match(fileContents, VersionLookup);
             if (match.Success)
             {
+                _logger.LogInformation("Version found successfully");
                 return match.Groups[1].Value;
             }
             else
             {
-                throw new Exception("Version not found in the file");
+                var ex = new InvalidOperationException();
+                _logger.LogError("Could not find the version in the specified file", ex);
+                throw ex;
             }
         }
     }
